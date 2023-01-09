@@ -23,5 +23,5 @@ cdef class hashtable(object):
         ret = hash_search(self.table, record)
         return ret != NULL
 
-    def destroy(self):
+    def __dealloc__(self):
         hash_destroy(self.table)
