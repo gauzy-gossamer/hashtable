@@ -8,6 +8,7 @@ cdef extern from "hashtable.h":
     hash_table_t *init_table(int num_slots)
     void *hash_search(hash_table_t *table, char *key)
     void *hash_insert(hash_table_t *table, char *key)
+    void *hash_remove(hash_table_t *table, char *key)
     void hash_destroy(hash_table_t *table)
 
 cdef class hashtable(object):
@@ -21,6 +22,10 @@ cdef class hashtable(object):
 
     def search(self, char *record):
         ret = hash_search(self.table, record)
+        return ret != NULL
+
+    def remove(self, char *record):
+        ret = hash_remove(self.table, record)
         return ret != NULL
 
     def __dealloc__(self):
