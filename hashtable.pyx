@@ -24,6 +24,9 @@ cdef class hashtable(object):
         ret = hash_search(self.table, record)
         return ret != NULL
 
+    def records(self):
+        return self.table.records
+
     def remove(self, char *record):
         ret = hash_remove(self.table, record)
         return ret != NULL
