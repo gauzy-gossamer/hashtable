@@ -1,10 +1,9 @@
-from distutils.core import setup
-from distutils.extension import Extension
-from Cython.Build import cythonize
+from setuptools import setup, Extension
 
-ext = Extension("hashtable", ["hashtable.pyx"])
 
 setup(
     name = "hashtable",
-    ext_modules = cythonize('*.pyx', language_level=3)
+    ext_modules = [
+        Extension("hashtable", sources=["hashtable.pyx"])
+    ]
 )

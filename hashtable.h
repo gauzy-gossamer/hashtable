@@ -8,6 +8,8 @@ typedef struct {
     char **slots;
     uint32_t num_slots;
     uint32_t records;
+    int iter_slot;
+    int iter_shift;
 } hash_table_t;
 
 void * 
@@ -224,7 +226,7 @@ resize_array(char **hash_table, uint32_t idx, uint32_t array_offset, uint32_t re
 void 
 hash_destroy(hash_table_t *table) {
     char **hash_table = table->slots;
-    register int i = 0; 
+    uint32_t i = 0; 
 
     for (i = 0; i < table->num_slots; i++)  {
         if (*(hash_table + i) != NULL)  
@@ -428,7 +430,7 @@ void *
 hash_remove(hash_table_t *table, char *query_start) {
     char **hash_table = table->slots;
     uint32_t register len, idx;
-    uint32_t array_offset;
+//    uint32_t array_offset;
     char *array, *array_start, *query = query_start;
     char *word_start;
 
@@ -521,6 +523,54 @@ swap:
     memcpy(found, record_end , array - record_end + 1);
 
     return (void*)ptr;
+}
+
+void
+iter_init(hash_table_t *table) {
+    table->iter_slot = 0;
+    table->iter_shift = 0;
+}
+
+char *
+iter_next(hash_table_t *table) {
+    int i = table->iter_slot;
+    char **hash_table = table->slots;
+    for (; i < table->num_slots; i++)  {
+        table->iter_slot = i;
+        if (*(hash_table + i) == NULL) {
+            continue;
+        }
+        int len;
+        char *array = *(hash_table + i);
+        array += table->iter_shift;
+        for (;;) {
+            if (*array == '\0') {
+                table->iter_shift = 0;
+                break;
+            }
+            if ((len = (unsigned int) *array) >= 128) {
+                 len = (unsigned int) (( *array & 0x7f ) << 8) | (unsigned int) (*(++array) & 0xff);
+            }
+            table->iter_shift++;
+            array++;
+
+            char *key = zmalloc(len);
+            strncpy(key, array, len+1);
+            key[len] = '\0';
+
+            array += len;
+            table->iter_shift += len;
+
+//            void **ptr;
+//            ptr = array;
+//            data_t *data = *ptr;
+//            proc_data(key, data);
+            array += sizeof(void*);
+            table->iter_shift += sizeof(void*);
+            return key;
+        }
+    }
+    return NULL;
 }
 
 hash_table_t *
