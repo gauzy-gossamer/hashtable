@@ -20,33 +20,47 @@ cdef extern from "hashtable.h":
 
 cdef class hashtable(object):
     cdef hash_table_t* table
+    cdef int changed
     cdef void ** ret
     def __init__(self, num_slots = 50000):
         self.table = init_table(num_slots)
 
-    def insert(self, char *record):
-        hash_insert(self.table, record)
+    def insert(self, str k):
+        cdef bytes k_
+        k_ = k.encode()
+        hash_insert(self.table, k_)
+        self.changed = True
 
-    def search(self, char *record):
-        ret = hash_search(self.table, record)
+    def search(self, str k):
+        cdef bytes k_
+        k_ = k.encode()
+        ret = hash_search(self.table, k_)
         return ret != NULL
+
+    __contains__ = search
 
     def __len__(self):
         return self.table.records
     records = __len__
 
-    def remove(self, char *record):
-        ret = hash_remove(self.table, record)
-        return ret != NULL
+    def __delitem__(self, str k):
+        cdef bytes k_
+        k_ = k.encode()
+        ret = hash_remove(self.table, k_)
+        self.changed = True
+    remove = __delitem__
 
     def __dealloc__(self):
         hash_destroy(self.table)
 
     def __iter__(self):
         iter_init(self.table);
+        self.changed = False
         return self
 
     def __next__(self):
+        if self.changed:
+            raise RuntimeError("dictionary changed size during iteration")
         cdef void *v = iter_next(self.table);
         if v == NULL:
             raise StopIteration

@@ -2,25 +2,28 @@ import os, psutil
 
 import hashtable
 
-def func():
+def test_hashtable():
     ht = hashtable.hashtable(500000)
-    for i in range(1000000):
-        ht.insert(str.encode('string{}'.format(i)))
+    items = 1000000
+    for i in range(items):
+        ht.insert('string{}'.format(i))
 
-#    assert(ht.search(b'string1') == True)
-#    assert(ht.search(b'string101') == False)
-#    assert(ht.remove(b'string1') == True)
-#    assert(ht.search(b'string1') == False)
+    assert(len(ht) == items)
+    assert('string1' in ht)
+    assert('strin' not in ht)
+    ht.remove('string1')
+    assert('string1' not in ht)
     for i in range(100):
         k = 'string{}'.format(i)
-        _ = ht.search(str.encode('string{}'.format(i)))
+        _ = ht.search('string{}'.format(i))
 
-    k =0
+    k = 0
     for v in ht:
         k += 1
+    assert(k == len(ht))
 
     process = psutil.Process()
     print(process.memory_info().rss/1024/1024.)  # in bytes 
 
 if __name__ == '__main__':
-    func()
+    test_hashtable()
