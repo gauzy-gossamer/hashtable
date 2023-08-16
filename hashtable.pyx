@@ -15,7 +15,7 @@ cdef extern from "hashtable.h":
     hash_table_t *init_table(int num_slots)
     void **hash_search(hash_table_t *table, char *key)
     void **hash_insert(hash_table_t *table, char *key)
-    void *hash_remove(hash_table_t *table, char *key)
+    void **hash_remove(hash_table_t *table, char *key)
     void hash_destroy(hash_table_t *table)
     void iter_init(hash_table_t *table)
     char *iter_next(hash_table_t *table)
@@ -88,7 +88,10 @@ cdef class hashtable(_hashbase):
         cdef bytes k_ = k.encode()
         cdef void **ret
         ret = hash_search(self.table, k_)
+        if ret == NULL:
+            return False
         return str(<char*>deref(ret), 'utf-8')
+
     search = __getitem__
 
     insert = __setitem__

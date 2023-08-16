@@ -222,18 +222,6 @@ resize_array(char **hash_table, uint32_t idx, uint32_t array_offset, uint32_t re
   }
 }
 
-/* frees up all the memory allocated by the slots of the array hash */
-void 
-hash_destroy(hash_table_t *table) {
-    char **hash_table = table->slots;
-    uint32_t i = 0; 
-
-    for (i = 0; i < table->num_slots; i++)  {
-        if (*(hash_table + i) != NULL)  
-            free( *(hash_table + i) );
-    }
-}
-
 /* 
  * checks whether a string exists in the hash table. 1 is returned 
  * if the string is found, 0 otherwise.
@@ -506,9 +494,10 @@ swap:
         return NULL;
     }
 
-    static char ptr[sizeof(void*)];
-
-    strncpy(ptr, (found + record_len), sizeof(void*));
+    void **ptr = (found + record_len);
+    if (*ptr != NULL) {
+        free(*ptr);
+    }
 
     table->records--;
 
@@ -517,12 +506,12 @@ swap:
     if (found == array_start && record_end == array) {
         free(array_start);
         *(hash_table + idx) = NULL;
-        return (void*)ptr;
+        return NULL;
     }
 
     memcpy(found, record_end , array - record_end + 1);
 
-    return (void*)ptr;
+    return NULL;
 }
 
 void
@@ -588,6 +577,40 @@ init_table(int num_slots) {
         fatal(MEMORY_EXHAUSTED);
     
     return hash_table;
+}
+
+/* frees up all the memory allocated by the slots of the array hash */
+void
+hash_destroy(hash_table_t *table) {
+    char **hash_table = table->slots;
+    uint32_t i = 0;
+    int len;
+
+    for (i = 0; i < table->num_slots; i++)  {
+        if (*(hash_table + i) == NULL) {
+            continue;
+        }
+
+        char *array = *(hash_table + i);
+        for (;;) {
+            if (*array == '\0') {
+                break;
+            }
+            if ((len = (unsigned int) *array) >= 128) {
+                 len = (unsigned int) (( *array & 0x7f ) << 8) | (unsigned int) (*(++array) & 0xff);
+            }
+            array += len + 1;
+
+            void **ptr = (void*)array;
+            if (*ptr != NULL) {
+                free(*ptr);
+            }
+            array += sizeof(void*);
+        }
+        free( *(hash_table + i) );
+    }
+    free(table->slots);
+    free(table);
 }
 
 #endif
