@@ -3,10 +3,10 @@ import os, psutil
 import hashtable
 
 def test_hashtable():
-    ht = hashtable.hashtable(500000)
+    ht = hashtable.hashset(500000)
     items = 1000000
     for i in range(items):
-        ht.insert('string{}'.format(i))
+        ht.add('string{}'.format(i))
 
     assert(len(ht) == items)
     assert('string1' in ht)
